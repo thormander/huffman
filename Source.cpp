@@ -25,9 +25,20 @@ int main(int argc, char* argv[]) {
     string input_file = argv[2];
     string output_file = argv[3];
 
-    if (string(argv[1]) == "-huff") {
+    if (string(argv[1]) == "-huff") 
+    {
+        cout << "huff executed!" << endl;
         compress(input_file, output_file);
-    } else {
+        cout << "huff completed!" << endl << endl;
+    }
+    else if (string(argv[1]) == "-unhuff")
+    {   
+        cout << "unhuff executed!" << endl;
+        decompress(input_file, output_file);
+        cout << "unhuff completed!" << endl << endl;
+    }
+    else
+    {
         cout << "Unknown option " << argv[1] << endl;
         return 1;
     }
