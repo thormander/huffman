@@ -58,6 +58,10 @@ void buildHuffmanTree(priority_queue<Node*, vector<Node*>, compare>& minHeap, un
 
 void compress(string input_file, string output_file) {
     ifstream in(input_file, ios::binary);
+
+    int bitPos = 0;
+    unsigned char curByte = 0;
+
     if (!in.is_open()) {
         cerr << "Error opening input file" << endl;
         return;
@@ -87,6 +91,10 @@ void compress(string input_file, string output_file) {
         return;
     }
 
+    // Write the number of Huffman codes and extraBits at the beginning of the file
+    out.put(static_cast<unsigned char>((huffCodes.size() - 1) >> 8)); // Store the high byte of the number of Huffman codes minus one
+    out.put(static_cast<unsigned char>((huffCodes.size() - 1) & 0xFF)); // Store the low byte of the number of Huffman codes minus one
+
     string bitString;
     while (in.get(ch)) {
         bitString += huffCodes[ch];
@@ -100,24 +108,39 @@ void compress(string input_file, string output_file) {
         bitString += "0";
     }
 
-    for (int i = 0; i < bitString.size(); i += 8) {
-        bitset<8> byte(bitString.substr(i, 8));
-        out.put(static_cast<char>(byte.to_ulong()));
-    }
-
-    out.put(static_cast<unsigned char>(huffCodes.size() - 1)); // Store the number of Huffman codes minus one
+    // Write the extraBits value
     out.put(static_cast<unsigned char>(extraBits));
 
-
+    // Write the Huffman codes
     for (const auto& item : huffCodes) {
         out.put(item.first);
         out.put(static_cast<char>(item.second.size()));
-        for (int i = 0; i < item.second.size(); i += 8) {
-            bitset<8> byte(item.second.substr(i, 8));
-            out.put(static_cast<char>(byte.to_ulong()));
+        for (int i = 0; i < item.second.size(); i += MAX_CODE_LENGTH) {
+            uint16_t bits = 0;
+            for (int j = 0; j < MAX_CODE_LENGTH && i + j < item.second.size(); ++j) {
+                bits |= (item.second[i + j] == '1') << (MAX_CODE_LENGTH - 1 - j);
+            }
+            out.put(static_cast<char>((bits >> 8) & 0xFF)); // Store the high byte of the bits
+            out.put(static_cast<char>(bits & 0xFF)); // Store the low byte of the bits
         }
     }
 
+    // Write the compressed data
+    for (int i = 0; i < bitString.size(); ++i) {
+        curByte = (curByte << 1) | (bitString[i] == '1' ? 1 : 0);
+        bitPos++;
+
+        if (bitPos == 8) {
+            out.put(static_cast<char>(curByte));
+            curByte = 0;
+            bitPos = 0;
+        }
+    }
+
+    if (bitPos > 0) {
+        curByte <<= (8 - bitPos);
+        out.put(static_cast<char>(curByte));
+    }
 
     in.close();
     out.close();
@@ -136,14 +159,18 @@ void decompress(string input_file, string output_file) {
         return;
     }
 
-    int numCodes = static_cast<int>(static_cast<unsigned char>(in.get())) + 1;
-    int storedExtraBits = static_cast<unsigned char>(in.get()); // Store the extraBits value in a separate variable
+    int64_t curBytePos = in.tellg();
+    in.seekg(0, ios::end);
+    int64_t fileSize = in.tellg();
+    in.seekg(0, ios::beg);
+
+    int numCodes = (static_cast<int>(static_cast<unsigned char>(in.get())) << 8) + static_cast<int>(static_cast<unsigned char>(in.get())) + 1;
+    int storedExtraBits = static_cast<unsigned char>(in.get());
 
     if (numCodes > (1 << MAX_CODE_LENGTH)) {
         cerr << "Error: Huffman code length exceeds maximum code length" << endl;
         return;
     }
-
 
     unordered_map<string, char> huffMap;
     for (int i = 0; i < numCodes; i++) {
@@ -152,18 +179,17 @@ void decompress(string input_file, string output_file) {
 
         int codeLen = static_cast<unsigned char>(in.get());
         string code;
-        for (int j = 0; j < (codeLen + 7) / 8; j++) {
-            char byte;
-            in.get(byte);
-            bitset<8> bits(byte);
-            if (codeLen >= 8) {
-                code += bits.to_string();
-                codeLen -= 8;
+        int remainingBits = codeLen;
+        while (remainingBits > 0) {
+            char byte1, byte2;
+            in.get(byte1);
+            in.get(byte2);
+            uint16_t bits = (static_cast<unsigned char>(byte1) << 8) + static_cast<unsigned char>(byte2);
+            int bitsToAppend = min(remainingBits, MAX_CODE_LENGTH);
+            for (int i = 0; i < bitsToAppend; ++i) {
+                code += (bits & (1 << (MAX_CODE_LENGTH - 1 - i))) ? '1' : '0';
             }
-            else {
-                code += bits.to_string().substr(0, codeLen);
-                break;
-            }
+            remainingBits -= bitsToAppend;
         }
 
         huffMap[code] = ch;
@@ -171,20 +197,28 @@ void decompress(string input_file, string output_file) {
 
     string bitString;
     char byte;
-    while (in.get(byte)) {
+    while (curBytePos < fileSize - 1) {
+        byte = static_cast<char>(in.get());
+        curBytePos = in.tellg();
         bitset<8> bits(byte);
-        bitString += bits.to_string();
+
+        int bitsToAppend = 8;
+        if (curBytePos == fileSize - 1) { // If it's the last byte, only append up to the extra bits
+            bitsToAppend -= storedExtraBits;
+        }
+
+        bitString += bits.to_string().substr(0, bitsToAppend);
     }
 
-    bitString.erase(bitString.size() - storedExtraBits, storedExtraBits); // Remove extra bits using the stored value
 
     string code;
-    for (char bit : bitString) {
+    for (size_t i = 0; i < bitString.size() - storedExtraBits; ++i) {
+        char bit = bitString[i];
         code += bit;
-        if (huffMap.find(code) != huffMap.end()) { // Check if the code exists in the Huffman map
+        if (huffMap.find(code) != huffMap.end()) {
             char ch = huffMap[code];
             if (ch == 31) {
-                break; // Stop decoding when the pseudo-EOF character is encountered
+                break;
             }
             else {
                 out.put(ch);
