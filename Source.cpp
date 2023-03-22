@@ -1,3 +1,5 @@
+//MAKE SURE TO ADD CASE WHERE FILE IS NOT COMPRESSED THROUGH THIS PROGRAM.
+
 #include <iostream>
 #include <fstream>
 #include <queue>
