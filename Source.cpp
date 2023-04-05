@@ -1,5 +1,3 @@
-//MAKE SURE TO ADD CASE WHERE FILE IS NOT COMPRESSED THROUGH THIS PROGRAM.
-
 #include <iostream>
 #include <fstream>
 #include <queue>
@@ -11,6 +9,7 @@
 using namespace std;
 
 int MAX_CODE_LENGTH = 16;
+const uint32_t MAGIC_NUMBER = 0xB00B135;
 
 struct Node {
     char ch;
@@ -93,6 +92,9 @@ void compress(string input_file, string output_file) {
         return;
     }
 
+    // Write the magic number
+    out.write(reinterpret_cast<const char*>(&MAGIC_NUMBER), sizeof(MAGIC_NUMBER));
+
     // Write the number of Huffman codes and extraBits at the beginning of the file
     out.put(static_cast<unsigned char>((huffCodes.size() - 1) >> 8)); // Store the high byte of the number of Huffman codes minus one
     out.put(static_cast<unsigned char>((huffCodes.size() - 1) & 0xFF)); // Store the low byte of the number of Huffman codes minus one
@@ -165,6 +167,14 @@ void decompress(string input_file, string output_file) {
     in.seekg(0, ios::end);
     int64_t fileSize = in.tellg();
     in.seekg(0, ios::beg);
+
+    // Check the magic number
+    uint32_t read_magic_number;
+    in.read(reinterpret_cast<char*>(&read_magic_number), sizeof(read_magic_number));
+    if (read_magic_number != MAGIC_NUMBER) {
+        cerr << "Error: Invalid magic number. This file may not have been compressed by this program." << endl;
+        return;
+    }
 
     int numCodes = (static_cast<int>(static_cast<unsigned char>(in.get())) << 8) + static_cast<int>(static_cast<unsigned char>(in.get())) + 1;
     int storedExtraBits = static_cast<unsigned char>(in.get());
