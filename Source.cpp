@@ -42,6 +42,12 @@ using namespace std;
 int MAX_CODE_LENGTH = 16; //Limits length of huffman code to help with compression
 const uint32_t MAGIC_NUMBER = 0xB00B135; //Prevent opening of files not compressed through this program
 
+/*
+* Description: Represents the node that will be used for the huffman tree
+* Return: None
+* Precondition: N/A
+* Postcondition: A new Node object will be created
+*/
 struct Node 
 {
     char ch;
@@ -52,6 +58,12 @@ struct Node
     Node(char ch, int freq) : ch(ch), freq(freq), left(nullptr), right(nullptr) {}
 };
 
+/*
+* Description: Compares two nodes together
+* Return: bool
+* Precondition: The left and right parameters must be nodes.
+* Postcondition: The Nodes will be compared based on their frequency values.
+*/
 struct compare 
 {
     bool operator()(Node* l, Node* r) 
@@ -329,8 +341,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    string input_file = argv[2];
-    string output_file = argv[3];
+    string input_file = argv[2]; //input_file
+    string output_file = argv[3]; //output_file
 
     if (string(argv[1]) == "-huff")
     {
