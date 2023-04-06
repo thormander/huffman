@@ -1,15 +1,46 @@
+/*
+* Author: Thor Landstrom
+* Assignment Title: Huffman
+* Assignment Description: Make a program that performs compression and decompression using Huffman's algorithim
+* Due Date: 4/10/2023
+* Date Created: 3/25/2023
+* Date Last Modified: 4/7/2023
+*/
+
+/*
+* Data Abstraction:
+*
+* Input: A .txt file in same directory as source code
+*        A .huff file (or preferred extension) in same directory as source code
+*
+* Output: A compressed file of a given .txt file (extension can be named by user, however I will just refer to it as .huff)
+*         A decompressed .txt file from the .huff created
+*
+* Process: The two main processes of the program are the 'compress' and 'decompress' functions. The compress function reads the input file using ofstream
+*          and counts the frequency of the characters storing them in a unordered map. Next, the huffman tree is built and the huffman code is generated.
+*          After this process, it first writes the magic number to the beginning and then writes the codes and necessary padding. The file is read again, 
+*          this time encoding each of the characters encountered. This is then outputted after our tree on the .huff compressed file. Add the psuedo-EOF to
+*          the end of the file. The second main function is the decompress function. On reading the compressed file, we scan for the magic number at the beginning 
+*          of the file. If there, read the codes and store the data in a unordered map. From here, read the compressed file storing them as bit strings, and 
+*          converting them back using the codes stored earlier. Continue this process until the psuedo-EOF character is encountered at the end (31 - Unit Seperator).
+*
+* Assumptions: For compression, it is assumed that user will input through the command line following the format "-huff inputFileName.txt outputFileName.huff"
+*              For decompression, it is assumed that user will input through the command line following the format "-unhuff outputFileName.huff outputFileName.txt "
+*              It is assumed if using VScode, to use project properties/debugging to input the command line arguement.
+*/
+
 #include <iostream>
-#include <fstream>
-#include <queue>
-#include <unordered_map>
+#include <fstream> 
+#include <queue> 
+#include <unordered_map> //for huffman codes
 #include <vector>
 #include <bitset>
-#include <functional>
+#include <functional> //encode function for huffman tree
 
 using namespace std;
 
-int MAX_CODE_LENGTH = 16;
-const uint32_t MAGIC_NUMBER = 0xB00B135;
+int MAX_CODE_LENGTH = 16; //Limits length of huffman code to help with compression
+const uint32_t MAGIC_NUMBER = 0xB00B135; //Prevent opening of files not compressed through this program
 
 struct Node {
     char ch;
