@@ -4,7 +4,7 @@
 * Assignment Description: Make a program that performs compression and decompression using Huffman's algorithim
 * Due Date: 4/10/2023
 * Date Created: 3/25/2023
-* Date Last Modified: 4/7/2023
+* Date Last Modified: 4/8/2023
 */
 
 /*
@@ -333,7 +333,7 @@ void decompress(string input_file, string output_file)
 
 int main(int argc, char* argv[]) 
 {
-    if (argc != 4) 
+    if (argc != 4) //error handling for wrong amount of arugments
     {
         cout << "Usage: " << argv[0] << " -huff input_file output_file" << endl;
         cout << "OR" << endl;
