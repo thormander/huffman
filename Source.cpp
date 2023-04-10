@@ -4,11 +4,12 @@
 * Assignment Description: Make a program that performs compression and decompression using Huffman's algorithim
 * Due Date: 4/10/2023
 * Date Created: 3/25/2023
-* Date Last Modified: 4/8/2023
+* Date Last Modified: 4/10/2023
 */
 
 /*
-* Data Abstraction:
+* Data Abstraction: The .txt file is directly read in by the functions. Data structures used consist of unordered map for the huffman codes. A vector is also used in the huffman tree storage.
+*                   User input is read in by command line arguments, and is checked for the right amount of arguments.
 *
 * Input: A .txt file in same directory as source code
 *        A .huff file (or preferred extension) in same directory as source code
@@ -18,10 +19,10 @@
 *
 * Process: The two main processes of the program are the 'compress' and 'decompress' functions. The compress function reads the input file using ofstream
 *          and counts the frequency of the characters storing them in a unordered map. Next, the huffman tree is built and the huffman code is generated.
-*          After this process, it first writes the magic number to the beginning and then writes the codes and necessary padding. The file is read again, 
+*          After this process, it first writes the magic number to the beginning and then writes the codes and necessary padding. The file is read again,
 *          this time encoding each of the characters encountered. This is then outputted after our tree on the .huff compressed file. Add the psuedo-EOF to
-*          the end of the file. The second main function is the decompress function. On reading the compressed file, we scan for the magic number at the beginning 
-*          of the file. If there, read the codes and store the data in a unordered map. From here, read the compressed file storing them as bit strings, and 
+*          the end of the file. The second main function is the decompress function. On reading the compressed file, we scan for the magic number at the beginning
+*          of the file. If there, read the codes and store the data in a unordered map. From here, read the compressed file storing them as bit strings, and
 *          converting them back using the codes stored earlier. Continue this process until the psuedo-EOF character is encountered at the end (31 - Unit Seperator).
 *
 * Assumptions: For compression, it is assumed that user will input through the command line following the format "-huff inputFileName.txt outputFileName.huff"
@@ -48,7 +49,7 @@ const uint32_t MAGIC_NUMBER = 0xB00B135; //Prevent opening of files not compress
 * Precondition: N/A
 * Postcondition: A new Node object will be created
 */
-struct Node 
+struct Node
 {
     char ch;
     int freq;
@@ -64,9 +65,9 @@ struct Node
 * Precondition: The left and right parameters must be nodes.
 * Postcondition: The Nodes will be compared based on their frequency values.
 */
-struct compare 
+struct compare
 {
-    bool operator()(Node* l, Node* r) 
+    bool operator()(Node* l, Node* r)
     {
         return l->freq > r->freq;
     }
@@ -78,10 +79,10 @@ struct compare
 * Precondition: The minHeap priority queue with at least one Node object, and the huff codes unordered_map is empty.
 * Postcondition: The unordered_map will have the huff codes stored
 */
-void buildHuffmanTree(priority_queue<Node*, vector<Node*>, compare>& minHeap, unordered_map<char, string>& huffCodes) 
+void buildHuffmanTree(priority_queue<Node*, vector<Node*>, compare>& minHeap, unordered_map<char, string>& huffCodes)
 {
     int maxCodeLen = 16; // Define maximum code length
-    while (minHeap.size() > 1) 
+    while (minHeap.size() > 1)
     {
         Node* left = minHeap.top();
         minHeap.pop();
@@ -119,14 +120,14 @@ void buildHuffmanTree(priority_queue<Node*, vector<Node*>, compare>& minHeap, un
 * Precondition: The input file and output file must be in same directory as source.
 * Postcondition: The input file will be compressed to the named output file.
 */
-void compress(string input_file, string output_file) 
+void compress(string input_file, string output_file)
 {
     ifstream in(input_file, ios::binary);
 
     int bitPos = 0;
     unsigned char curByte = 0;
 
-    if (!in.is_open()) 
+    if (!in.is_open())
     {
         cerr << "Error opening input file" << endl; //error checking for failure on input open
         return;
@@ -134,14 +135,14 @@ void compress(string input_file, string output_file)
 
     unordered_map<char, int> freqMap;
     char ch;
-    while (in.get(ch)) 
+    while (in.get(ch))
     {
         freqMap[ch]++;
     }
     freqMap[31] = 1; // Add pseudo-EOF character with a frequency of 1
 
     priority_queue<Node*, vector<Node*>, compare> minHeap;
-    for (const auto& item : freqMap) 
+    for (const auto& item : freqMap)
     {
         minHeap.push(new Node(item.first, item.second));
     }
@@ -153,7 +154,7 @@ void compress(string input_file, string output_file)
     in.seekg(0);
 
     ofstream out(output_file, ios::binary);
-    if (!out.is_open()) 
+    if (!out.is_open())
     {
         cerr << "Error opening output file" << endl; //error checking on output file
         return;
@@ -184,11 +185,11 @@ void compress(string input_file, string output_file)
     out.put(static_cast<unsigned char>(extraBits));
 
     // Write the Huffman codes
-    for (const auto& item : huffCodes) 
+    for (const auto& item : huffCodes)
     {
         out.put(item.first);
         out.put(static_cast<char>(item.second.size()));
-        for (int i = 0; i < item.second.size(); i += MAX_CODE_LENGTH) 
+        for (int i = 0; i < item.second.size(); i += MAX_CODE_LENGTH)
         {
             uint16_t bits = 0;
             for (int j = 0; j < MAX_CODE_LENGTH && i + j < item.second.size(); j++) //originally ++j 
@@ -201,12 +202,12 @@ void compress(string input_file, string output_file)
     }
 
     // Write the compressed data
-    for (int i = 0; i < bitString.size(); ++i) 
+    for (int i = 0; i < bitString.size(); ++i)
     {
         curByte = (curByte << 1) | (bitString[i] == '1' ? 1 : 0);
         bitPos++;
 
-        if (bitPos == 8) 
+        if (bitPos == 8)
         {
             out.put(static_cast<char>(curByte));
             curByte = 0;
@@ -214,7 +215,7 @@ void compress(string input_file, string output_file)
         }
     }
 
-    if (bitPos > 0) 
+    if (bitPos > 0)
     {
         curByte <<= (8 - bitPos);
         out.put(static_cast<char>(curByte));
@@ -224,17 +225,23 @@ void compress(string input_file, string output_file)
     out.close();
 }
 
+/*
+* Description: '-unhuff' or decompress an input compreessed file (.huff)
+* Return: N/A
+* Precondition: The input file and output file must be in same directory as source. The input file must have the correct 'MAGIC_NUMBER' at the beginning or it will not run.
+* Postcondition: The input file will be decompressed to the named output file.
+*/
 void decompress(string input_file, string output_file)
 {
     ifstream in(input_file, ios::binary);
-    if (!in.is_open()) 
+    if (!in.is_open())
     {
         cerr << "Error opening input file" << endl; //error checking input file open
         return;
     }
 
     ofstream out(output_file, ios::binary);
-    if (!out.is_open()) 
+    if (!out.is_open())
     {
         cerr << "Error opening output file" << endl; //error checking output file open
         return;
@@ -257,14 +264,14 @@ void decompress(string input_file, string output_file)
     int numCodes = (static_cast<int>(static_cast<unsigned char>(in.get())) << 8) + static_cast<int>(static_cast<unsigned char>(in.get())) + 1;
     int storedExtraBits = static_cast<unsigned char>(in.get());
 
-    if (numCodes > (1 << MAX_CODE_LENGTH)) 
+    if (numCodes > (1 << MAX_CODE_LENGTH))
     {
         cerr << "Error: Huffman code length exceeds maximum code length" << endl;
         return;
     }
 
     unordered_map<string, char> huffMap;
-    for (int i = 0; i < numCodes; i++)  
+    for (int i = 0; i < numCodes; i++)
     {
         char ch;
         in.get(ch);
@@ -272,7 +279,7 @@ void decompress(string input_file, string output_file)
         int codeLen = static_cast<unsigned char>(in.get());
         string code;
         int remainingBits = codeLen;
-        while (remainingBits > 0) 
+        while (remainingBits > 0)
         {
             char byte1, byte2;
             in.get(byte1);
@@ -291,7 +298,7 @@ void decompress(string input_file, string output_file)
 
     string bitString;
     char byte;
-    while (curBytePos < fileSize - 1) 
+    while (curBytePos < fileSize - 1)
     {
         byte = static_cast<char>(in.get());
         curBytePos = in.tellg();
@@ -299,7 +306,7 @@ void decompress(string input_file, string output_file)
 
         int bitsToAppend = 8;
         if (curBytePos == fileSize - 1) // If it's last, only append up to the extra bits
-        { 
+        {
             bitsToAppend -= storedExtraBits;
         }
 
@@ -312,14 +319,14 @@ void decompress(string input_file, string output_file)
     {
         char bit = bitString[i];
         code += bit;
-        if (huffMap.find(code) != huffMap.end()) 
+        if (huffMap.find(code) != huffMap.end())
         {
             char ch = huffMap[code];
             if (ch == 31) // psuedo-EOF character checking
             {
                 break;
             }
-            else 
+            else
             {
                 out.put(ch);
             }
@@ -331,7 +338,7 @@ void decompress(string input_file, string output_file)
     out.close();
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
     if (argc != 4) //error handling for wrong amount of arugments
     {
