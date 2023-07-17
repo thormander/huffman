@@ -1,13 +1,4 @@
 /*
-* Author: Thor Landstrom
-* Assignment Title: Huffman
-* Assignment Description: Make a program that performs compression and decompression using Huffman's algorithim
-* Due Date: 4/10/2023
-* Date Created: 3/25/2023
-* Date Last Modified: 4/10/2023
-*/
-
-/*
 * Data Abstraction: The .txt file is directly read in by the functions. Data structures used consist of unordered map for the huffman codes. A vector is also used in the huffman tree storage.
 *                   User input is read in by command line arguments, and is checked for the right amount of arguments.
 *
