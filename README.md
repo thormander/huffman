@@ -15,4 +15,4 @@
 - Usage:
   - It is recommended to use a '.huff' extension when compressing, however you may use whichever you like.
   - To compress: ```./huffmanProgram -huff <your_text_file.txt> <name_of_compressed_file.huff>```
-  - To uncompress ```./huffmanPorgram -unhuff <name_of_compressed_file.huff> <your_text_file.txt>```
+  - To uncompress ```./huffmanPorgram -unhuff <name_of_compressed_file.huff> <your_uncompressed_text_file.txt>```
