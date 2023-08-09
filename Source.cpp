@@ -342,6 +342,7 @@ int main(int argc, char* argv[])
     string input_file = argv[2]; //input_file
     string output_file = argv[3]; //output_file
 
+    // Input handling and running the compress/uncompress methods
     if (string(argv[1]) == "-huff")
     {
         cout << "huff executed!" << endl;
